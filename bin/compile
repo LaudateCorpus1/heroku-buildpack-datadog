@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir>
+
+# fail fast
+set -e
+
+function topic() {
+  echo "-----> $*"
+}
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+PACKAGES_PATH="$BUILD_DIR/.apt"
+mkdir -p $PACKAGES_PATH
+
+# debug
+# set -x
+
+# Download the PHP DataDog Tracer package
+DD_TRACE_VERSION="0.56.0"
+DD_TRACE_URL="https://github.com/DataDog/dd-trace-php/releases/download/${DD_TRACE_VERSION}/datadog-php-tracer_${DD_TRACE_VERSION}_amd64.deb"
+DD_TRACE_DEB="$CACHE_DIR/datadog-php-tracer_${DD_TRACE_VERSION}.deb"
+
+if [ -f $DD_TRACE_DEB ]; then
+  topic "Using DataDog Tracer v.${DD_TRACE_VERSION} deb from cache"
+else
+  topic "Downloading DataDog Tracer deb v.${DD_TRACE_VERSION}"
+  curl -L $DD_TRACE_URL -o $DD_TRACE_DEB
+fi
+
+topic "Extracting DataDog PHP Extension"
+dpkg -x $DD_TRACE_DEB $PACKAGES_PATH
+
+# Install DataDog Tracer PHP Extension
+DD_PHP_INI="$BUILD_DIR/.heroku/php/etc/php/conf.d/200-ext-ddtrace.ini"
+DD_PACKAGE_DIR="$PACKAGES_PATH/opt/datadog-php"
+DD_EXTENSION_VERSION="20180731"
+
+topic "Installing DataDog PHP extension"
+touch $DD_PHP_INI
+echo "[PHP]" >> $DD_PHP_INI
+echo "extension=$DD_PACKAGE_DIR/extensions/ddtrace-${DD_EXTENSION_VERSION}.so" >> $DD_PHP_INI
+echo "ddtrace.request_init_hook=$DD_PACKAGE_DIR/dd-trace-sources/bridge/dd_wrap_autoloader.php" >> $DD_PHP_INI
+topic "DataDog extension installed"

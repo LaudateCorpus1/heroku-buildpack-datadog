@@ -34,7 +34,7 @@ dpkg -x $DD_TRACE_DEB $PACKAGES_PATH
 
 # Install DataDog Tracer PHP Extension
 DD_PHP_INI="$BUILD_DIR/.heroku/php/etc/php/conf.d/200-ext-ddtrace.ini"
-DD_PACKAGE_DIR="$PACKAGES_PATH/opt/datadog-php"
+DD_PACKAGE_DIR="/app/.apt/opt/datadog-php"
 DD_EXTENSION_VERSION="20180731"
 
 topic "Installing DataDog PHP extension"
